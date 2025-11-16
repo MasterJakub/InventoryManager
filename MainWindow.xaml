@@ -1,0 +1,503 @@
+﻿<Window x:Class="InventoryManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:InventoryManager"
+        mc:Ignorable="d"
+        Title="WPF Správce Inventáře" 
+        
+        MinHeight="600" MinWidth="900" 
+        
+        WindowStartupLocation="CenterScreen"
+        Background="#F3F4F6">
+
+    <Window.Resources>
+        <!-- Převodníky -->
+        <local:PrevodnikNullNaBool x:Key="PrevodnikNullNaBool"/>
+        <local:PrevodnikPrikazuUpravy x:Key="PrevodnikPrikazuUpravy"/>
+
+        <!-- Barevná paleta -->
+        <SolidColorBrush x:Key="BarvaPozadi" Color="#F3F4F6"/>
+        <SolidColorBrush x:Key="BarvaKarty" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BarvaTextNadpis" Color="#111827"/>
+        <SolidColorBrush x:Key="BarvaTextTelo" Color="#4B5563"/>
+        <SolidColorBrush x:Key="BarvaOkraje" Color="#E5E7EB"/>
+        <SolidColorBrush x:Key="BarvaVyber" Color="#EFF6FF"/>
+        <SolidColorBrush x:Key="BarvaPrimarni" Color="#2563EB"/>
+        <SolidColorBrush x:Key="BarvaUspesna" Color="#16A34A"/>
+        <SolidColorBrush x:Key="BarvaNebezpeci" Color="#DC2626"/>
+
+        <!-- Efekt stínu pro karty -->
+        <DropShadowEffect x:Key="StinKarty" ShadowDepth="1" Direction="270" Color="#000000" Opacity="0.1" BlurRadius="5"/>
+
+        <!-- 
+        ================================================================
+        IMPLICITNÍ (AUTOMATICKÉ) STYLY
+        ================================================================
+        -->
+
+        <!-- Implicitní styl pro VŠECHNA Textová Pole (TextBox) -->
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource BarvaKarty}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BarvaOkraje}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{StaticResource BarvaTextTelo}"/>
+            <Setter Property="Padding" Value="7,5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="6" 
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BarvaPrimarni}"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect ShadowDepth="0" Color="#2563EB" Opacity="0.3" BlurRadius="4"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Implicitní styl pro VŠECHNY TextBlocky (běžný text) -->
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BarvaTextTelo}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- OPRAVENÝ styl pro záhlaví (s šipkou a opraveným oddělovačem) -->
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F9FAFB"/>
+            <Setter Property="Foreground" Value="{StaticResource BarvaTextTelo}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10, 10"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BarvaOkraje}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridColumnHeader">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Obsah (text) záhlaví -->
+                                    <ContentPresenter Grid.Column="0"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+
+                                    <!-- Šipka pro řazení -->
+                                    <Path x:Name="SortArrow"
+                                          Grid.Column="1"
+                                          Visibility="Collapsed"
+                                          Fill="{StaticResource BarvaTextTelo}"
+                                          Stroke="{StaticResource BarvaTextTelo}"
+                                          StrokeThickness="1"
+                                          Data="M 0,0 L 4,4 L 8,0 Z" 
+                                          Width="8"
+                                          Height="5"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Center"
+                                          Margin="5,0,0,0"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- OPRAVA: Neviditelný oddělovač -->
+                            <Thumb x:Name="PART_ColumnHeaderGripper"
+                                   HorizontalAlignment="Right"
+                                   Width="8"
+                                   Cursor="SizeWE">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Background="Transparent" Padding="0"/>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="SortDirection" Value="Descending">
+                                <Setter TargetName="SortArrow" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="SortDirection" Value="Ascending">
+                                <Setter TargetName="SortArrow" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="SortArrow" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <RotateTransform Angle="180" CenterX="4" CenterY="2.5"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Implicitní styl pro řádky DataGrid -->
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="{StaticResource BarvaKarty}"/>
+            <Setter Property="Foreground" Value="{StaticResource BarvaTextTelo}"/>
+            <Setter Property="MinHeight" Value="45"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BarvaOkraje}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{StaticResource BarvaVyber}"/>
+                    <Setter Property="Foreground" Value="{StaticResource BarvaTextNadpis}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource BarvaVyber}"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F9FAFB"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Implicitní styl pro buňky DataGrid -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10, 5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="{StaticResource BarvaTextNadpis}"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="{StaticResource BarvaTextNadpis}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 
+        ================================================================
+        EXPLICITNÍ (POJMENOVANÉ) STYLY
+        ================================================================
+        -->
+
+        <!-- STYL: Pro centrování textu uvnitř buněk DataGridTextColumn -->
+        <Style x:Key="CentrovanyTextBunky" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Styl pro "Karty" (panely) -->
+        <Style x:Key="KartaPanel" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource BarvaKarty}"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Effect" Value="{StaticResource StinKarty}"/>
+        </Style>
+
+        <!-- Styly pro nadpisy -->
+        <Style x:Key="TextHlavniNadpis" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource BarvaTextNadpis}"/>
+        </Style>
+        <Style x:Key="TextNadpisKarty" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource BarvaTextNadpis}"/>
+        </Style>
+
+        <!-- Základní styl Tlačítka -->
+        <Style x:Key="ZakladniTlacitko" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="14, 10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="6" 
+                                Padding="5"
+                                BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="RenderTransformOrigin" Value="0.5, 0.5"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Odvozené styly Tlačítek -->
+        <Style x:Key="TlacitkoPrimarni" TargetType="Button" BasedOn="{StaticResource ZakladniTlacitko}">
+            <Setter Property="Background" Value="{StaticResource BarvaPrimarni}"/>
+        </Style>
+        <Style x:Key="TlacitkoUspesne" TargetType="Button" BasedOn="{StaticResource ZakladniTlacitko}">
+            <Setter Property="Background" Value="{StaticResource BarvaUspesna}"/>
+        </Style>
+        <Style x:Key="TlacitkoNebezpeci" TargetType="Button" BasedOn="{StaticResource ZakladniTlacitko}">
+            <Setter Property="Background" Value="{StaticResource BarvaNebezpeci}"/>
+        </Style>
+
+        <!-- Styl pro Tlačítka +/- -->
+        <Style x:Key="TlacitkoUpravy" TargetType="Button" BasedOn="{StaticResource ZakladniTlacitko}">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+    </Window.Resources>
+
+    <!-- 
+    ================================================================
+    HLAVNÍ ROZLOŽENÍ OKNA
+    ================================================================
+    -->
+    <Grid Margin="25">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Řádek 0: Titulek -->
+            <RowDefinition Height="*"/>
+            <!-- Řádek 1: Hlavní obsah (tabulka, panely) -->
+            <RowDefinition Height="Auto"/>
+            <!-- Řádek 2: Panel pro přidání položky -->
+        </Grid.RowDefinitions>
+
+        <!-- TITULEK (Řádek 0) -->
+        <TextBlock Grid.Row="0" Text="Správce Inventáře" 
+                   Style="{StaticResource TextHlavniNadpis}"
+                   Margin="0,0,0,20"/>
+
+        <!-- HLAVNÍ OBSAH (Řádek 1) -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <!-- Sloupec 0: Tabulka -->
+                <ColumnDefinition Width="280"/>
+                <!-- Sloupec 1: Postranní panel -->
+            </Grid.ColumnDefinitions>
+
+            <!-- DataGrid (Tabulka) (Sloupec 0) -->
+            <DataGrid Grid.Column="0"
+                      x:Name="InventoryDataGrid"
+                      ItemsSource="{Binding InventoryItems}"
+                      SelectedItem="{Binding SelectedItem, Mode=TwoWay}" 
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      
+                      IsReadOnly="True"
+
+                RowHeaderWidth="0"
+                      BorderThickness="1"
+                      BorderBrush="{StaticResource BarvaOkraje}"
+                      Background="{StaticResource BarvaKarty}"
+                      GridLinesVisibility="None" 
+                      SelectionMode="Single">
+
+                <DataGrid.Columns>
+
+                    <!-- Jméno: POUZE pro čtení v řádku (upravuje se v panelu) -->
+                    <DataGridTextColumn Header="Položka" Binding="{Binding Name}" Width="*" 
+                                        SortMemberPath="Name" 
+                                        ElementStyle="{StaticResource CentrovanyTextBunky}"/>
+
+                    <!-- Kategorie: POUZE pro čtení v řádku -->
+                    <DataGridTextColumn Header="Kategorie" Binding="{Binding Category}" Width="*" 
+                                        SortMemberPath="Category" 
+                                        ElementStyle="{StaticResource CentrovanyTextBunky}"/>
+
+                    <!-- Množství: POUZE pro čtení v řádku -->
+                    <DataGridTextColumn Header="Množství (ks)" Binding="{Binding Quantity}" Width="0.7*" 
+                                        IsReadOnly="True" 
+                                        SortMemberPath="Quantity" 
+                                        ElementStyle="{StaticResource CentrovanyTextBunky}"/>
+
+                    <!-- Cena: POUZE pro čtení v řádku -->
+                    <DataGridTextColumn Header="Cena (Kč)" Binding="{Binding Price, StringFormat=N2}" Width="0.7*" 
+                                        SortMemberPath="Price" 
+                                        ElementStyle="{StaticResource CentrovanyTextBunky}"/>
+
+                    <!-- Celková hodnota: POUZE pro čtení -->
+                    <DataGridTextColumn Header="Celková hodnota (Kč)" Binding="{Binding TotalValue, StringFormat=N2}" Width="*" 
+                                        IsReadOnly="True" 
+                                        SortMemberPath="TotalValue" 
+                                        ElementStyle="{StaticResource CentrovanyTextBunky}"/>
+
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Postranní panel (Karta) (Sloupec 1) -->
+            <Border Grid.Column="1" Style="{StaticResource KartaPanel}" Margin="20,0,0,0" VerticalAlignment="Top">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="Vybraná položka" 
+                               Style="{StaticResource TextNadpisKarty}" Margin="0,0,0,15"
+                               TextWrapping="Wrap" TextAlignment="Center"/>
+
+                    <Border Background="{StaticResource BarvaPozadi}" CornerRadius="6" Padding="10" MinHeight="40">
+                        <TextBlock Text="{Binding SelectedItem.Name, FallbackValue='(Vyberte položku)'}" 
+                                   FontWeight="Bold" TextWrapping="Wrap" MaxWidth="200" 
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="{StaticResource BarvaTextTelo}"/>
+                    </Border>
+
+                    <!-- NOVÉ VSTUPNÍ POLE PRO EDITACI V PANELU -->
+                    <StackPanel Margin="0,15,0,0">
+                        <TextBlock Text="Název položky:" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                        <TextBox Text="{Binding SelectedItem.Name, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SelectedItem, Converter={StaticResource PrevodnikNullNaBool}}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock Text="Kategorie:" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                        <TextBox Text="{Binding SelectedItem.Category, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SelectedItem, Converter={StaticResource PrevodnikNullNaBool}}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock Text="Cena (Kč):" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                        <TextBox Text="{Binding SelectedItem.Price, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" IsEnabled="{Binding SelectedItem, Converter={StaticResource PrevodnikNullNaBool}}"/>
+                    </StackPanel>
+
+                    <!-- PŮVODNÍ PANEL PRO MNOŽSTVÍ -->
+                    <TextBlock Text="Úprava Množství:" Margin="0,20,0,5" FontWeight="SemiBold"/>
+
+                    <TextBox Text="{Binding AdjustmentAmount, UpdateSourceTrigger=PropertyChanged}" 
+                             Width="100" Padding="7,5" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="-" 
+                                Style="{StaticResource TlacitkoUpravy}" 
+                                Background="{StaticResource BarvaNebezpeci}" 
+                                Margin="0,0,10,0">
+                            <Button.IsEnabled>
+                                <Binding Path="SelectedItem" Converter="{StaticResource PrevodnikNullNaBool}"/>
+                            </Button.IsEnabled>
+                            <Button.Command>
+                                <Binding Path="AdjustQuantityCommand"/>
+                            </Button.Command>
+                            <Button.CommandParameter>
+                                <MultiBinding Converter="{StaticResource PrevodnikPrikazuUpravy}">
+                                    <Binding Path="SelectedItem"/>
+                                    <Binding Source="Remove"/>
+                                </MultiBinding>
+                            </Button.CommandParameter>
+                        </Button>
+
+                        <Button Content="+" 
+                                Style="{StaticResource TlacitkoUpravy}" 
+                                Background="{StaticResource BarvaUspesna}">
+                            <Button.IsEnabled>
+                                <Binding Path="SelectedItem" Converter="{StaticResource PrevodnikNullNaBool}"/>
+                            </Button.IsEnabled>
+                            <Button.Command>
+                                <Binding Path="AdjustQuantityCommand"/>
+                            </Button.Command>
+                            <Button.CommandParameter>
+                                <MultiBinding Converter="{StaticResource PrevodnikPrikazuUpravy}">
+                                    <Binding Path="SelectedItem"/>
+                                    <Binding Source="Add"/>
+                                </MultiBinding>
+                            </Button.CommandParameter>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- PANEL PRO PŘIDÁNÍ A ULOŽENÍ (Řádek 2) -->
+        <Border Grid.Row="2" Style="{StaticResource KartaPanel}" Margin="0,20,0,0">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Přidat Novou Položku" 
+                           Style="{StaticResource TextNadpisKarty}" Margin="0,0,0,15"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="1.5*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <TextBlock Text="Jméno:" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <!-- NOVÝ ComboBox (místo TextBoxu) -->
+                    <StackPanel Grid.Column="1" Margin="5,0,10,0">
+                        <TextBlock Text="Kategorie:" Margin="0,0,0,5"/>
+                        <ComboBox ItemsSource="{Binding AvailableCategories}"
+                                  Text="{Binding NewItemCategory, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEditable="True"
+                                  VerticalContentAlignment="Center"
+                                  Padding="7,5"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Margin="5,0,10,0">
+                        <TextBlock Text="Množství: (ks)" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding NewItemQuantity, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Margin="5,0,0,0">
+                        <TextBlock Text="Cena: (kč)" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding NewItemPrice, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                    <Button Content="Přidat Položku" 
+                            Command="{Binding AddItemCommand}"
+                            Style="{StaticResource TlacitkoUspesne}"
+                            Margin="0,0,10,0"/>
+
+                    <Button Content="Smazat Vybrané" 
+                            Command="{Binding DeleteItemCommand}"
+                            CommandParameter="{Binding SelectedItem}"
+                            Style="{StaticResource TlacitkoNebezpeci}"
+                            Margin="0,0,10,0">
+                        <Button.IsEnabled>
+                            <Binding Path="SelectedItem" Converter="{StaticResource PrevodnikNullNaBool}"/>
+                        </Button.IsEnabled>
+                    </Button>
+
+                    <Button Content="Uložit Změny" 
+                            Command="{Binding SaveCommand}"
+                            Style="{StaticResource TlacitkoPrimarni}"
+                            Margin="10,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
